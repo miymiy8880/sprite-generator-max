@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Sprite Fabricator</title>
+    <style>
+        body {
+            background-color: #0b0b0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #fff;
+        }
+        h1 {
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 40px);
+            grid-template-rows: repeat(7, 40px);
+            gap: 2px;
+            background-color: #111;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            transition: background-color 0.2s ease;
+        }
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+        .btn-fabricate {
+            background-color: #fff;
+            color: #000;
+        }
+        .btn-fabricate:hover {
+            background-color: #ddd;
+        }
+        .btn-download {
+            background-color: #222;
+            color: #fff;
+            border: 2px solid #444;
+        }
+        .btn-download:hover {
+            background-color: #333;
+            border-color: #666;
+        }
+        /* Keep the canvas hidden from sight */
+        #downloadCanvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SPRITE FABRICATOR</h1>
+    
+    <div class="grid" id="spriteGrid"></div>
+    
+    <div class="button-container">
+        <button class="btn-fabricate" onclick="fabricateSprite()">FABRICATE NEW</button>
+        <button class="btn-download" onclick="downloadSprite()">DOWNLOAD PNG</button>
+    </div>
+
+    <canvas id="downloadCanvas" width="280" height="280"></canvas>
+
+    <script>
+        // Expanded arcade & cyberpunk color palette!
+        const COLORS = [
+            "#FF0055", // Neon Pink
+            "#00FFCC", // Cyan / Electric Teal
+            "#9900FF", // Deep Purple
+            "#FF9900", // Retro Orange
+            "#00FF66", // Lime Green
+            "#FF00AA", // Magenta
+            "#FFCC00", // Cyber Gold
+            "#0099FF"  // Electric Blue
+        ];
+
+        // Global variables to keep track of the current sprite's design
+        let currentSpriteMatrix = [];
+        let currentSpriteColor = "";
+
+        function fabricateSprite() {
+            const gridContainer = document.getElementById("spriteGrid");
+            gridContainer.innerHTML = ""; 
+            currentSpriteMatrix = []; // Clear old data
+            
+            // Pick a random color
+            currentSpriteColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+            const gridSize = 7;
+
+            for (let row = 0; row < gridSize; row++) {
+                let rowCells = [];
+
+                // 1. Generate random layout for left side
+                for (let col = 0; col < 4; col++) {
+                    let isFilled = Math.random() < 0.5 ? 1 : 0;
+                    rowCells.push(isFilled);
+                }
+
+                // 2. Mirror it for symmetry
+                let fullRow = rowCells.concat([rowCells[2], rowCells[1], rowCells[0]]);
+                currentSpriteMatrix.push(fullRow); // Save row to our matrix for downloading later
+
+                // 3. Render on screen
+                fullRow.forEach(cell => {
+                    const cellDiv = document.createElement("div");
+                    cellDiv.className = "cell";
+                    
+                    if (cell === 1) {
+                        cellDiv.style.backgroundColor = currentSpriteColor;
+                    } else {
+                        cellDiv.style.backgroundColor = "#1a1a1a";
+                    }
+                    
+                    gridContainer.appendChild(cellDiv);
+                });
+            }
+        }
+
+        function downloadSprite() {
+            const canvas = document.getElementById("downloadCanvas");
+            const ctx = canvas.getContext("2d");
+            const blockSize = 40; // Match the 40px width/height from our CSS
+
+            // 1. Draw the dark background inside the canvas container
+            ctx.fillStyle = "#111111";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Loop through our saved layout matrix and paint the pixels onto the canvas
+            for (let row = 0; row < 7; row++) {
+                for (let col = 0; col < 7; col++) {
+                    const cellType = currentSpriteMatrix[row][col];
+                    
+                    // Add a tiny 2px gap just like our CSS grid layout has
+                    const x = 10 + (col * blockSize);
+                    const y = 10 + (row * blockSize);
+                    const drawSize = blockSize - 2;
+
+                    if (cellType === 1) {
+                        ctx.fillStyle = currentSpriteColor;
+                    } else {
+                        ctx.fillStyle = "#1a1a1a";
+                    }
+                    ctx.fillRect(x, y, drawSize, drawSize);
+                }
+            }
+
+            // 3. Create an invisible download link and trigger it automatically
+            const link = document.createElement('a');
+            link.download = 'pixel-sprite.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Generate the first one automatically on load
+        fabricateSprite();
+    </script>
+</body>
+</html>
